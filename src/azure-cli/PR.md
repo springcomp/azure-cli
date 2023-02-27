@@ -23,8 +23,10 @@ Here is a new query that can be performed using JMESPath Community:
 
 ```sh
 az storage account list \
-  --query "group_by([].{loc: location, n:name}).*.let( {key: [0].loc, values: [*].n}, &{key: key, values: values})|from_items(zip([*].key, [*].values))"
+  --query "group_by([].{loc: location, n:name}, &loc).*.let( {key: [0].loc, values: [*].n}, &{key: key, values: values})|from_items(zip([*].key, [*].values))"
 ``` 
+
+with the corresponding result:
 
 ```json
 {
@@ -33,6 +35,20 @@ az storage account list \
   "westus": [ "storageaccount-004", "storageaccount-005" ]
 }
 ```
+
+While there is definitely a learning curve to JMESPath, this example features most of the improvements we’ve made to the specification.
+
+The full expression can be broken down into chunks:
+
+- `` group_by([].{loc: location, n: name}, &loc) ``: creates a new hash with the subset of interesting `location` and `names` properties from the original object. It uses the new `group_by()` function to split the result by location.
+- `` .* ``: is a value projection to create an array that can be iterated upon subsequently.
+- `` let( {key: [0].loc, values: [*].n}, &{key:key, values:values}) ``: expression that is evaluated for each item in the projected array. It uses the new `let()` function to take advantage of lexical scoping.
+  - Its first argument initialize a new scope with the two `key` and `values` properties that contain the value of the `loc` property from the first array entry – as all entries contain the same location at this stage – and the list of names respectively.
+  - Its second argument creates a hash with the two aforementioned properties.
+- `` | ``: the pipe stops the projection so that later expressions operate on the full array instead of being evaluated iteratively on each array element.
+- `` from_items(zip([*].key, [*].values)) ``: creates the expected result.
+  - It uses the new `zip()` function to combine the list of `key` elements and the `values` arrays into a single entity.
+  - It then uses the new `from_items()` functions to combine those two lists like for like to produce the resulting object shown above.
 
 **Overview**
 
@@ -44,7 +60,7 @@ This PR makes the following changes:
 - Replaces original dependencies over `jmespath` Python package to the new `jmespath-community` Python package.
 - Replaces original dependencies over `jmespath-terminal` (`jpterm` helper) Python CLI tool to the new `jmespath-community-terminal` tool in Docker images.
 - Replaces original `github.com/jmespath/jp` CLI tool by the new `github.com/jmespath-community/jp` CLI tool in Docker images.
-- Updates minimum Python version from `3.7.13` for Docker images.
+- Updates minimum Python version to `3.7.16` for some Docker image.
 - Updates various documentation pages while keeping the same LICENSE requirements.
 
 I’m not sure if all the documentation pages must be updated though.
