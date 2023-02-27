@@ -13,18 +13,24 @@ For instance, consider the following current behaviour:
 [
   { "location": "westeurope", "name": "storageaccount-001" },
   { "location": "westeurope", "name": "storageaccount-002" },
-  { "location": "westeurope", "name": "storageaccount-003" },
-  { "location": "northeurope", "name": "storageaccount-004" },
-  { "location": "westus", "name": "storageaccount-005" },
-  { "location": "westus", "name": "storageaccount-006" }
+  { "location": "northeurope", "name": "storageaccount-003" },
+  { "location": "westus", "name": "storageaccount-004" },
+  { "location": "westus", "name": "storageaccount-005" }
 ]
 ```
 
 Here is a new queries that can be performed using JMESPath Community:
 
 - `` az storage account list --query "[].{location: location, name:name}" ``: 
-group_by(@, &location).*.let({location: @[0].location, names: @[].name}, &{location: location, names: names})
-group_by(@, &location).*.let( {keys: [0].location, values: [*].name}, &{keys: keys, values: values})
+group_by(@, &location).*.let( {keys: [0].location, values: [*].name}, &{keys: keys, values: values})|from_items(zip([*].keys, [*].values))
+
+```json
+{
+  "westeurope": [ "storageaccount-001", "storageaccount-002" ],
+  "northeurope": [ "storageaccount-003" ],
+  "westus": [ "storageaccount-004", "storageaccount-005" ]
+}
+```
 
 **Overview**
 
