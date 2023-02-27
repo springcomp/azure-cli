@@ -19,10 +19,12 @@ For instance, consider the following current behaviour:
 ]
 ```
 
-Here is a new queries that can be performed using JMESPath Community:
+Here is a new query that can be performed using JMESPath Community:
 
-- `` az storage account list --query "[].{location: location, name:name}" ``: 
-group_by(@, &location).*.let( {keys: [0].location, values: [*].name}, &{keys: keys, values: values})|from_items(zip([*].keys, [*].values))
+```sh
+az storage account list \
+  --query "group_by([].{loc: location, n:name}).*.let( {key: [0].loc, values: [*].n}, &{key: key, values: values})|from_items(zip([*].key, [*].values))"
+``` 
 
 ```json
 {
@@ -42,6 +44,7 @@ This PR makes the following changes:
 - Replaces original dependencies over `jmespath` Python package to the new `jmespath-community` Python package.
 - Replaces original dependencies over `jmespath-terminal` (`jpterm` helper) Python CLI tool to the new `jmespath-community-terminal` tool in Docker images.
 - Replaces original `github.com/jmespath/jp` CLI tool by the new `github.com/jmespath-community/jp` CLI tool in Docker images.
+- Updates minimum Python version from `3.7.13` for Docker images.
 - Updates various documentation pages while keeping the same LICENSE requirements.
 
 I’m not sure if all the documentation pages must be updated though.
